@@ -17,36 +17,15 @@
 */
 package net.hydromatic.optiq.jdbc;
 
-import java.sql.SQLException;
-
 /**
- * Utility methods, mainly concerning error-handling.
+ * Implementation of {@link net.hydromatic.avatica.AvaticaFactory}
+ * for Optiq and JDBC 4.0 (corresponds to JDK 1.6).
  */
-public class Helper {
-  public static final Helper INSTANCE = new Helper();
-
-  private Helper() {
-  }
-
-  public RuntimeException todo() {
-    return new RuntimeException("todo: implement this method");
-  }
-
-  public RuntimeException wrap(String message, Exception e) {
-    return new RuntimeException(message, e);
-  }
-
-  public SQLException createException(String message, Exception e) {
-    return new SQLException(message, e);
-  }
-
-  public SQLException createException(String message) {
-    return new SQLException(message);
-  }
-
-  public SQLException toSQLException(SQLException exception) {
-    return exception;
+public class OptiqJdbc40Factory extends OptiqJdbc41Factory {
+  /** Creates a JDBC factory. */
+  public OptiqJdbc40Factory() {
+    super(4, 0);
   }
 }
 
-// End Helper.java
+// End OptiqJdbc40Factory.java

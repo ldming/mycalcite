@@ -17,33 +17,15 @@
 */
 package net.hydromatic.optiq.jdbc;
 
-import java.sql.SQLException;
-
-/**
- * Implementation of {@link Handler} that does nothing for each callback.
- * It is recommended implementations of {@code Handler} use this as a base
- * class, to ensure forward compatibility.
- */
-public class HandlerImpl implements Handler {
-  public void onConnectionInit(OptiqConnection connection)
-      throws SQLException {
-    // nothing
-  }
-
-  public void onConnectionClose(OptiqConnection connection)
-      throws RuntimeException {
-    // nothing
-  }
-
-  public void onStatementExecute(
-      OptiqStatement statement, ResultSink resultSink) throws RuntimeException {
-    // nothing
-  }
-
-  public void onStatementClose(OptiqStatement statement)
-      throws RuntimeException {
-    // nothing
-  }
+/** Interface for reading connection properties within Optiq code. There is
+ * a method for every property. At some point there will be similar config
+ * classes for system and statement properties. */
+public interface ConnectionConfig {
+  boolean autoTemp();
+  boolean materializationsEnabled();
+  String model();
+  String schema();
+  boolean spark();
 }
 
-// End HandlerImpl.java
+// End ConnectionConfig.java

@@ -17,34 +17,31 @@
 */
 package net.hydromatic.optiq.jdbc;
 
-import net.hydromatic.linq4j.function.Function0;
-import net.hydromatic.linq4j.function.Function1;
-
-import net.hydromatic.optiq.DataContext;
-import net.hydromatic.optiq.runtime.ColumnMetaData;
-import net.hydromatic.optiq.runtime.Cursor;
+import net.hydromatic.avatica.*;
 
 import java.io.InputStream;
 import java.io.Reader;
 import java.sql.*;
 import java.util.List;
 import java.util.Properties;
+import java.util.TimeZone;
 
 /**
- * Implementation of {@link Factory} for JDBC 4.1 (corresponds to JDK 1.7).
+ * Implementation of {@link net.hydromatic.avatica.AvaticaFactory}
+ * for Optiq and JDBC 4.1 (corresponds to JDK 1.7).
  */
 @SuppressWarnings("UnusedDeclaration")
-class FactoryJdbc41 implements Factory {
+public class OptiqJdbc41Factory implements AvaticaFactory {
   private final int major;
   private final int minor;
 
   /** Creates a JDBC factory. */
-  public FactoryJdbc41() {
+  public OptiqJdbc41Factory() {
     this(4, 1);
   }
 
   /** Creates a JDBC factory with given major/minor version number. */
-  protected FactoryJdbc41(int major, int minor) {
+  protected OptiqJdbc41Factory(int major, int minor) {
     this.major = major;
     this.minor = minor;
   }
@@ -57,72 +54,71 @@ class FactoryJdbc41 implements Factory {
     return minor;
   }
 
-  public OptiqConnectionImpl newConnection(
+  public AvaticaConnection newConnection(
       UnregisteredDriver driver,
-      Factory factory,
-      Function0<OptiqPrepare> prepareFactory,
+      AvaticaFactory factory,
       String url,
       Properties info) {
-    return new OptiqConnectionJdbc41(
-        driver, factory, prepareFactory, url, info);
+    return new OptiqJdbc41Connection((Driver) driver, factory, url, info);
   }
 
-  public OptiqDatabaseMetaData newDatabaseMetaData(
-      OptiqConnectionImpl connection) {
-    return new OptiqDatabaseMetaDataJdbc41(connection);
+  public OptiqJdbc41DatabaseMetaData newDatabaseMetaData(
+      AvaticaConnection connection) {
+    return new OptiqJdbc41DatabaseMetaData(
+        (OptiqConnectionImpl) connection);
   }
 
-  public OptiqStatement newStatement(
-      OptiqConnectionImpl connection,
+  public OptiqJdbc41Statement newStatement(
+      AvaticaConnection connection,
       int resultSetType,
       int resultSetConcurrency,
       int resultSetHoldability) {
-    return new OptiqStatementJdbc41(
-        connection, resultSetType, resultSetConcurrency,
+    return new OptiqJdbc41Statement(
+        (OptiqConnectionImpl) connection, resultSetType, resultSetConcurrency,
         resultSetHoldability);
   }
 
-  public OptiqPreparedStatement newPreparedStatement(
-      OptiqConnectionImpl connection,
-      String sql,
+  public AvaticaPreparedStatement newPreparedStatement(
+      AvaticaConnection connection,
+      AvaticaPrepareResult prepareResult,
       int resultSetType,
       int resultSetConcurrency,
       int resultSetHoldability) throws SQLException {
-    return new OptiqPreparedStatementJdbc41(
-        connection, sql, resultSetType, resultSetConcurrency,
-        resultSetHoldability);
+    return new OptiqJdbc41PreparedStatement(
+        (OptiqConnectionImpl) connection,
+        (OptiqPrepare.PrepareResult) prepareResult, resultSetType,
+        resultSetConcurrency, resultSetHoldability);
   }
 
   public OptiqResultSet newResultSet(
-      OptiqStatement statement,
-      List<ColumnMetaData> columnMetaDataList,
-      Function1<DataContext, Cursor> cursorFactory) {
+      AvaticaStatement statement,
+      AvaticaPrepareResult prepareResult,
+      TimeZone timeZone) {
     final ResultSetMetaData metaData =
-        newResultSetMetaData(statement, columnMetaDataList);
-    return new OptiqResultSet(
-        statement, columnMetaDataList, metaData, cursorFactory);
+        newResultSetMetaData(statement, prepareResult.getColumnList());
+    return new OptiqResultSet(statement,
+        (OptiqPrepare.PrepareResult) prepareResult, metaData, timeZone);
   }
 
   public ResultSetMetaData newResultSetMetaData(
-      OptiqStatement statement,
+      AvaticaStatement statement,
       List<ColumnMetaData> columnMetaDataList) {
-    return new OptiqResultSetMetaData(
+    return new AvaticaResultSetMetaData(
         statement, null, columnMetaDataList);
   }
 
-  private static class OptiqConnectionJdbc41 extends OptiqConnectionImpl {
-    OptiqConnectionJdbc41(
-        UnregisteredDriver driver,
-        Factory factory,
-        Function0<OptiqPrepare> prepareFactory,
+  private static class OptiqJdbc41Connection extends OptiqConnectionImpl {
+    OptiqJdbc41Connection(
+        Driver driver,
+        AvaticaFactory factory,
         String url,
         Properties info) {
-      super(driver, factory, prepareFactory, url, info);
+      super(driver, factory, url, info);
     }
   }
 
-  private static class OptiqStatementJdbc41 extends OptiqStatement {
-    public OptiqStatementJdbc41(
+  private static class OptiqJdbc41Statement extends OptiqStatement {
+    public OptiqJdbc41Statement(
         OptiqConnectionImpl connection,
         int resultSetType,
         int resultSetConcurrency,
@@ -141,16 +137,16 @@ class FactoryJdbc41 implements Factory {
     }
   }
 
-  private static class OptiqPreparedStatementJdbc41
+  private static class OptiqJdbc41PreparedStatement
       extends OptiqPreparedStatement {
-    OptiqPreparedStatementJdbc41(
+    OptiqJdbc41PreparedStatement(
         OptiqConnectionImpl connection,
-        String sql,
+        OptiqPrepare.PrepareResult prepareResult,
         int resultSetType,
         int resultSetConcurrency,
         int resultSetHoldability) throws SQLException {
       super(
-          connection, sql, resultSetType, resultSetConcurrency,
+          connection, prepareResult, resultSetType, resultSetConcurrency,
           resultSetHoldability);
     }
 
@@ -270,12 +266,12 @@ class FactoryJdbc41 implements Factory {
     }
   }
 
-  private static class OptiqDatabaseMetaDataJdbc41
-      extends OptiqDatabaseMetaData {
-    OptiqDatabaseMetaDataJdbc41(OptiqConnectionImpl connection) {
+  private static class OptiqJdbc41DatabaseMetaData
+      extends AvaticaDatabaseMetaData {
+    OptiqJdbc41DatabaseMetaData(OptiqConnectionImpl connection) {
       super(connection);
     }
   }
 }
 
-// End FactoryJdbc41.java
+// End OptiqJdbc41Factory.java

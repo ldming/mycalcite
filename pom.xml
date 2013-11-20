@@ -12,6 +12,14 @@
   <name>optiq-core</name>
   <description>Core Optiq APIs and engine.</description>
 
+  <dependencies>
+    <dependency>
+      <groupId>net.hydromatic</groupId>
+      <artifactId>optiq-avatica</artifactId>
+      <version>0.4.16-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>
